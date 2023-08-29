@@ -26,3 +26,12 @@ names(integrated@meta.data)
 
 #Dimentional Plot
 DimPlot(integrated, reduction = "umap", pt.size = 0.5, group.by = 'Choose name from meta.data')
+
+#Check reductions slot
+integrated@reductions
+
+#extract the reduction embeddings
+harmony.embeddings <- Embeddings(integrated, "harmony")
+
+#Sanity Check
+harmony.embeddings[1:5,1:5]
