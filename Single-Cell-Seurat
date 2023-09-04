@@ -4,3 +4,41 @@ library(CellChat)
 library(patchwork)
 library(tidy-verse)
 library(BiocManager)
+
+
+
+#Read Data
+raw_data <- ReadMtx(mtx = 'Path to file matrix.mtx', features = 'Path to file features.tsv', cells = 'Path to file barcodes.tsv')
+
+raw_data[1:5,1:5]
+
+#Check for nulls
+sum(is.na(raw_data))
+#If result of previous line > 0
+raw_data[is.na(raw_data)] = 0
+
+#Check for duplicates
+raw_data <- raw_data[!duplicated(raw_data@Dimnames[1]),]
+
+#drop first column with gene names and make it rownames
+genes <- raw_data@Dimnames[1]
+raw_data <- raw_data[,-1]
+rownames(raw_data) <- genes
+
+#Create Seurat Object
+seurob <- CreateSeuratObject(counts = raw_data, project = "CaCo Patients")
+View(seurob@assays$RNA)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
