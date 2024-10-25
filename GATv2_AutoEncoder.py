@@ -132,7 +132,7 @@ def train(data):
     
     # Compute loss for training nodes only
     mask = data.train_mask
-    loss = kld(reconstructed[mask], features_soft[mask])
+    loss = kld(reconstructed[mask], F.log_softmax(data.y, dim = 1)[mask])
     loss.backward()
     optimizer.step()
 
@@ -144,7 +144,7 @@ def test(data):
         
         losses = []
         for _, mask in data('train_mask', 'val_mask', 'test_mask'):
-            loss = kld(reconstructed[mask], features_soft[mask])
+            loss = kld(reconstructed[mask], F.log_softmax(data.y, dim = 1)[mask])
             losses.append(loss)
         return losses
 
