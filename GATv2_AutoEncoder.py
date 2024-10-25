@@ -68,7 +68,7 @@ data = transform(data)
       ################## Model Architecture ##################
 
 class AutoEncoder(torch.nn.Module):
-    def __init__(self, data, n_dim = 64):
+    def __init__(self, data, n_dim = 128):
         input_size = data.num_node_features
         super().__init__()
         
