@@ -96,7 +96,7 @@ DimPlot(seurob, group.by = "seurat_clusters", label = TRUE, pt.size = 1, repel =
 head(Idents(seurob))
 
 #Get markers for each cluster
-markers_cluster <- FindMarkers(seurob, ident.1 = 'Pick a Cluster', features = VariableFeatures(seurob))
+markers_cluster <- FindMarkers(seurob, ident.1 = '0', features = VariableFeatures(seurob))
 
 #Check markers
 head(markers_cluster)
@@ -110,21 +110,16 @@ seurob <- RenameIdents(seurob, '0'= "Naïve T-Cells",
                                '4'= "Melanoma" ,
                                '5'= "Keratinocytes",
                                '6'= "Endothelial Cells",
-                               '7'= "Nerve Cells")
+                               '7'= "Glial-Neuronal")
 
 
 
 DimPlot(seurob, reduction = "umap", label = TRUE, pt.size = 0.5)
 
 
-#Download Plot as pdf file
+#Save Plot as pdf file
 pdf(file='UMAP.pdf',
    width=10,
     height=10)
 
 DimPlot(seurob, reduction = "umap", group.by = "seurat_clusters", cols = DiscretePalette(17, palette = 'glasbey', shuffle = FALSE))
-dev.off()
-
-
-
-
