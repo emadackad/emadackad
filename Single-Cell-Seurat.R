@@ -9,7 +9,7 @@ install.packages('metap')
 
 
 #Read Data
-raw_data <- ReadMtx(mtx = 'Path to file matrix.mtx', features = 'Path to file features.tsv', cells = 'Path to file barcodes.tsv')
+raw_data <- ReadMtx(mtx = 'matrix.mtx', features = 'features.tsv', cells = 'barcodes.tsv')
 
 raw_data[1:5,1:5]
 
