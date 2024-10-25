@@ -15,7 +15,7 @@ library(R2HTML)
 
 
 #Load Data
-Glio <- readRDS('/Users/emad/RProjects/Glioblastoma/query_downsample.rds')
+Glio <- readRDS('query_downsample.rds')
 
 DimPlot(Glio, reduction = 'umap', label = TRUE)
 
@@ -32,7 +32,7 @@ counts <- as.matrix(counts)
 
 #Initialize
 org <- "hgnc"
-dbDir <- '/Users/emad/RProjects/SCENIC/DB'
+dbDir <- '/DB/'
 data(defaultDbNames)
 dbs <- defaultDbNames[[org]]
 
@@ -51,8 +51,8 @@ genesKept <- geneFiltering(counts, scenicOptions=scenicOptions,
                            minCountsPerGene=3*.01*ncol(counts),
                            minSamples=ncol(counts)*.01)
 
-# filter the expression matrix to contain only these 1316 genes. 
-# This matrix is now ready for the co-expression analysis.
+# filter the expression matrix to contain only those genes. 
+# Matrix ready for co-expression analysis.
 
 ### 2. Correlation
 counts_filtered <- counts[genesKept,]
@@ -61,7 +61,7 @@ runCorrelation(counts_filtered, scenicOptions)
 # Run GENIE3
 runGenie3(counts_filtered, scenicOptions, nTrees=10)
 
-weightMat <- readRDS('/Users/emad/RProjects/SCENIC/int/1.3_GENIE3_weightMatrix_part_10.Rds')
+weightMat <- readRDS('/int/1.3_GENIE3_weightMatrix_part_10.Rds')
 linkList <- getLinkList(weightMat, reportMax=120)
 
 
