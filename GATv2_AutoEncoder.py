@@ -129,10 +129,11 @@ def train(data):
     model.train()
     reconstructed = model(data)
     reconstructed = F.log_softmax(reconstructed, dim = 1)
+    features_soft = F.log_softmax(data.y, dim = 1)
     
     # Compute loss for training nodes only
     mask = data.train_mask
-    loss = kld(reconstructed[mask], F.log_softmax(data.y, dim = 1)[mask])
+    loss = kld(reconstructed[mask], features_soft[mask])
     loss.backward()
     optimizer.step()
 
@@ -141,10 +142,11 @@ def test(data):
     with torch.inference_mode():
         reconstructed = model(data)
         reconstructed = F.log_softmax(reconstructed, dim = 1)
+        features_soft = F.log_softmax(data.y, dim = 1)
         
         losses = []
         for _, mask in data('train_mask', 'val_mask', 'test_mask'):
-            loss = kld(reconstructed[mask], F.log_softmax(data.y, dim = 1)[mask])
+            loss = kld(reconstructed[mask], features_soft[mask])
             losses.append(loss)
         return losses
 
