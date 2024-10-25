@@ -55,7 +55,7 @@ integrated <- FindClusters(integrated, resolution = 0.5)
 names(integrated@meta.data)
 
 #Dimentional Plot
-DimPlot(integrated, reduction = "umap", group.by = "choose name from meta.data")
+DimPlot(integrated, reduction = "umap", group.by = "study.id")
 
 #Check reductions slot
 integrated@reductions
@@ -66,3 +66,4 @@ rpca.embeddings <- Embeddings(integrated, "umap")
 #Sanity Check
 rpca.embeddings[1:5,1:2]
 
+write.csv(integrated@reductions$rpca@cell.embeddings, file = 'rPCA.csv', quote = F, row.names = F)
