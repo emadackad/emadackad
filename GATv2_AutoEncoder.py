@@ -18,9 +18,8 @@ import torch.nn.functional as F
 !pip install scanpy
 import scanpy as sc
 import anndata
-!pip install umap
-import umap
-
+!pip install umap-learn
+from umap import UMAP
 
     #Read Data
 X = io.mmread('matrix.mtx')
@@ -190,27 +189,25 @@ with torch.inference_mode():
     x4, x5, reconstructed = model.run_decoder(latent, data.edge_index, data.edge_weight, return_embeddings = True)
 
 
-reducer = umap.UMAP()
+reducer = UMAP(n_neighbors=15, min_dist=0.1, n_components=2)
   #Put each Embeddings in a Dataframe
-original_space = reducer.fit_transform(features_log_std)
+original_space = reducer.fit_transform(features_log_std.detach())
 original_space = pd.DataFrame(original_space, columns=['UMAP1', 'UMAP2'])
-embedding_1 = reducer.fit_transform(x1)
+embedding_1 = reducer.fit_transform(x1.detach())
 embedding_1 = pd.DataFrame(embedding_1, columns=['UMAP1', 'UMAP2'])
-embedding_2 = reducer.fit_transform(x2)
+embedding_2 = reducer.fit_transform(x2.detach())
 embedding_2 = pd.DataFrame(embedding_2, columns=['UMAP1', 'UMAP2'])
-latent_embeddeing = reducer.fit_transform(latent)
+latent_embeddeing = reducer.fit_transform(latent.detach())
 latent_embeddeing = pd.DataFrame(latent_embeddeing, columns=['UMAP1', 'UMAP2'])
-embedding_4 = reducer.fit_transform(x4)
+embedding_4 = reducer.fit_transform(x4.detach())
 embedding_4 = pd.DataFrame(embedding_4, columns=['UMAP1', 'UMAP2'])
-embedding_5 = reducer.fit_transform(x5)
+embedding_5 = reducer.fit_transform(x5.detach())
 embedding_5 = pd.DataFrame(embedding_5, columns=['UMAP1', 'UMAP2'])
-reconstructed_embeddeing = reducer.fit_transform(x5)
+reconstructed_embeddeing = reducer.fit_transform(x5.detach())
 reconstructed_embeddeing = pd.DataFrame(reconstructed_embeddeing, columns=['UMAP1', 'UMAP2'])
 
-original_space['Label'], embedding_1['Label'], embedding_2['Label'], latent_embeddeing['Label'], embedding_4['Label'], embedding_5['Label'], reconstructed_embeddeing['Label'] = le.inverse_transform(labels)
-
 plt.figure(figsize=(10, 7))
-sns.scatterplot(data=latent_embeddeing, x='UMAP1', y='UMAP2', hue='Label', palette='Set1', s=100)
+sns.scatterplot(data=latent_embeddeing, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100)
 plt.title('Latent Embeddings')
 plt.xlabel('UMAP1')
 plt.ylabel('UMAP2')
@@ -219,19 +216,19 @@ plt.show()
 
 #Plot Encoding
 fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-sns.scatterplot(data=original_space, x='UMAP1', y='UMAP2', hue='Label', palette='Set1', s=100, ax=axes[0])
+sns.scatterplot(data=original_space, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[0])
 axes[0].set_title('Original')
 axes[0].set_xlabel('UMAP1')
 axes[0].set_ylabel('UMAP2')
 axes[0].grid(True)
 
-sns.scatterplot(data=embedding_1, x='UMAP1', y='UMAP2', hue='Label', palette='Set1', s=100, ax=axes[1])
+sns.scatterplot(data=embedding_1, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[1])
 axes[1].set_title('Encoder Embeddings 1')
 axes[1].set_xlabel('UMAP1')
 axes[1].set_ylabel('UMAP2')
 axes[1].grid(True)
 
-sns.scatterplot(data=embedding_2, x='UMAP1', y='UMAP2', hue='Label', palette='Set1', s=100, ax=axes[2])
+sns.scatterplot(data=embedding_2, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[2])
 axes[2].set_title('Encoder Embeddings 2')
 axes[2].set_xlabel('UMAP1')
 axes[2].set_ylabel('UMAP2')
@@ -241,19 +238,19 @@ plt.show()
 
 #Plot Decoding
 fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-sns.scatterplot(data=embedding_4, x='UMAP1', y='UMAP2', hue='Label', palette='Set1', s=100, ax=axes[0])
+sns.scatterplot(data=embedding_4, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[0])
 axes[0].set_title('Decoder Embeddings 1')
 axes[0].set_xlabel('UMAP1')
 axes[0].set_ylabel('UMAP2')
 axes[0].grid(True)
 
-sns.scatterplot(data=embedding_5, x='UMAP1', y='UMAP2', hue='Label', palette='Set1', s=100, ax=axes[1])
+sns.scatterplot(data=embedding_5, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[1])
 axes[1].set_title('Decoder Embeddings 2')
 axes[1].set_xlabel('UMAP1')
 axes[1].set_ylabel('UMAP2')
 axes[1].grid(True)
 
-sns.scatterplot(data=reconstructed_embeddeing, x='UMAP1', y='UMAP2', hue='Label', palette='Set1', s=100, ax=axes[2])
+sns.scatterplot(data=reconstructed_embeddeing, x='UMAP1', y=labels, hue='Label', palette='Set1', s=100, ax=axes[2])
 axes[2].set_title('Reconstructed Embeddings')
 axes[2].set_xlabel('UMAP1')
 axes[2].set_ylabel('UMAP2')
