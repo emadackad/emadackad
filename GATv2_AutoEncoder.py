@@ -206,13 +206,6 @@ embedding_5 = pd.DataFrame(embedding_5, columns=['UMAP1', 'UMAP2'])
 reconstructed_embeddeing = reducer.fit_transform(x5.detach())
 reconstructed_embeddeing = pd.DataFrame(reconstructed_embeddeing, columns=['UMAP1', 'UMAP2'])
 
-plt.figure(figsize=(10, 7))
-sns.scatterplot(data=latent_embeddeing, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100)
-plt.title('Latent Embeddings')
-plt.xlabel('UMAP1')
-plt.ylabel('UMAP2')
-plt.legend(title='Annotations')
-plt.show()
 
 #Plot Encoding
 fig, axes = plt.subplots(1, 3, figsize=(18, 6))
@@ -233,6 +226,15 @@ axes[2].set_title('Encoder Embeddings 2')
 axes[2].set_xlabel('UMAP1')
 axes[2].set_ylabel('UMAP2')
 axes[2].grid(True)
+plt.legend(title='Annotations')
+plt.show()
+
+#Plot Latent Embeddings
+plt.figure(figsize=(10, 7))
+sns.scatterplot(data=latent_embeddeing, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100)
+plt.title('Latent Embeddings')
+plt.xlabel('UMAP1')
+plt.ylabel('UMAP2')
 plt.legend(title='Annotations')
 plt.show()
 
