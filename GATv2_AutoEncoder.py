@@ -18,21 +18,62 @@ import torch.nn.functional as F
 !pip install scanpy
 import scanpy as sc
 import anndata
-!pip install umap-learn
-from umap import UMAP
 
     #Read Data
 X = io.mmread('matrix.mtx')
+#gene names
 with open('gene_names.csv', 'r') as f:
     gene_names = f.read().splitlines()
+
+#metadata
 metadata = pd.read_csv('metadata.csv')
 
-#Encode Labels
-le = LabelEncoder().fit(metadata['Annotations'])
-labels = le.transform(metadata['Annotations'])
+#Integrated Embeddings
+harmony = pd.read_csv('harmony.csv')
+harmony.index = adata.obs.index
+adata.obsm['X_harmony'] = harmony.to_numpy()
 
+adata = anndata.AnnData(X=X.transpose().tocsr())
+adata.obs = metadata
+adata.obs.index = adata.obs['barcodes']
+adata.var.index = gene_names
+adata.var_names_make_unique()
+adata.obs_names_make_unique()
+    #QC Metrics
+adata.var['mt'] = adata.var_names.str.startswith('MT')
+sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+#Visalize coding genes, total genes and mt genes
+sc.pl.violin(adata, ['n_genes_by_counts', 'total_counts', 'pct_counts_mt'], jitter=0.4, multi_panel=True, save='.pdf')
+sc.pl.scatter(adata, x='total_counts', y='pct_counts_mt', save='mt_pct.pdf')
+sc.pl.scatter(adata, x='total_counts', y='n_genes_by_counts', save='coding_genes.pdf')
+    #Slicing using quantiles
+#coding genes
+upper_lim = np.quantile(adata.obs.n_genes_by_counts.values, .98)
+lower_lim = np.quantile(adata.obs.n_genes_by_counts.values, .02)
+adata=adata[(adata.obs.n_genes_by_counts < upper_lim) & (adata.obs.n_genes_by_counts > lower_lim)]
+#total genes
+upper_lim = np.quantile(adata.obs.total_counts.values, .98)
+lower_lim = np.quantile(adata.obs.total_counts.values, .02)
+adata=adata[(adata.obs.total_counts < upper_lim1) & (adata.obs.total_counts > lower_lim1)]
+#mt genes
+lower_lim = np.quantile(adata.obs.pct_counts_mt.values, .01)
+adata=adata[(adata.obs.pct_counts_mt < 20) & (adata.obs.pct_counts_mt > lower_lim2)]
 
-connectivities = sparse.load_npz('connectivities.npz')
+    #Normalizea and Scale
+sc.pp.normalize_total(adata)
+sc.pp.log1p(adata)
+print('Normalized and log transformed')
+sc.pp.regress_out(adata, ['total_counts', 'pct_counts_mt'])
+print('Regressed out')
+sc.pp.scale(adata, max_value=10)
+print('Scaled')
+
+#Connectivities
+sc.pp.neighbors(adata, n_neighbors = 15, use_rep = 'X_harmony')
+connectivities = adata.obsp['connectivities']
+sparse.save_npz("connectivities.npz", connectivities)
+#connectivities = sparse.load_npz('connectivities.npz')
+
 G = nx.from_scipy_sparse_array(connectivities)
 print("Graph is weighted: ", nx.is_weighted(G))
 print("Graph is directed: ", nx.is_directed(G))
@@ -40,7 +81,7 @@ print("number of nodes: ", int(G.number_of_nodes()))
 print("number of edges: ", int(G.number_of_edges()))
 
   #Data Prep
-counts = torch.tensor(X.transpose().tocsr(), dtype=torch.float)
+counts = torch.tensor(adata.raw.X.transpose(), dtype=torch.float)
 features_log = torch.log1p(counts)
     #Min-Max Norm
 #min_max_scaler = MinMaxScaler()
@@ -122,7 +163,7 @@ kld = torch.nn.KLDivLoss(reduction = 'batchmean', log_target = False)
 mse = torch.nn.MSELoss()
 cel = torch.nn.CrossEntropyLoss()
 
-#Define Trainig
+#Trainig
 def train(data):
     optimizer.zero_grad()
     model.train()
@@ -136,7 +177,7 @@ def train(data):
     loss.backward()
     optimizer.step()
 
-#Define Testing
+#Testing
 def test(data):
     with torch.inference_mode():
         reconstructed = model(data)
