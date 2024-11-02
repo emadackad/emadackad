@@ -23,7 +23,6 @@ from umap import UMAP
 
     #Read Data
 X = io.mmread('matrix.mtx')
-connectivities = sparse.load_npz('connectivities.npz')
 with open('gene_names.csv', 'r') as f:
     gene_names = f.read().splitlines()
 metadata = pd.read_csv('metadata.csv')
@@ -33,6 +32,7 @@ le = LabelEncoder().fit(metadata['Annotations'])
 labels = le.transform(metadata['Annotations'])
 
 
+connectivities = sparse.load_npz('connectivities.npz')
 G = nx.from_scipy_sparse_array(connectivities)
 print("Graph is weighted: ", nx.is_weighted(G))
 print("Graph is directed: ", nx.is_directed(G))
@@ -183,79 +183,24 @@ with torch.inference_mode():
     latent, (att_index1, w1), (att_index2, w2), (att_index3, w3) = model.run_encoder(data)
     out, (att_index4, w4), (att_index5, w5), (att_index6, w6) = model.run_decoder(latent, data.edge_index, data.edge_weight)
 
+#Put att index and coeff in a Dataframe
+attention_weights_1 = []
+for i in range(len(w1)):
+    source_node = att_index1[0, i].item()
+    target_node = att_index1[1, i].item()
+    coefficient = w1[i].item()
+    source_node_name = gene_names[source_node]
+    target_node_name = gene_names[target_node]
+    attention_weights.append([source_node_name, target_node_name, coefficient])
+# Save to CSV
+df = pd.DataFrame(attention_weights, columns=['Source Node', 'Target Node', 'Attention Coefficient'])
+df.to_csv('attention_coefficients.csv', index=False)
+
 #Embeddings
 with torch.inference_mode():
     x1, x2, latent = model.run_encoder(data, return_embeddings = True)
     x4, x5, reconstructed = model.run_decoder(latent, data.edge_index, data.edge_weight, return_embeddings = True)
 
 
-reducer = UMAP(n_neighbors=15, min_dist=0.1, n_components=2)
-  #Put each Embeddings in a Dataframe
-original_space = reducer.fit_transform(features_log_std.detach())
-original_space = pd.DataFrame(original_space, columns=['UMAP1', 'UMAP2'])
-embedding_1 = reducer.fit_transform(x1.detach())
-embedding_1 = pd.DataFrame(embedding_1, columns=['UMAP1', 'UMAP2'])
-embedding_2 = reducer.fit_transform(x2.detach())
-embedding_2 = pd.DataFrame(embedding_2, columns=['UMAP1', 'UMAP2'])
-latent_embeddeing = reducer.fit_transform(latent.detach())
-latent_embeddeing = pd.DataFrame(latent_embeddeing, columns=['UMAP1', 'UMAP2'])
-embedding_4 = reducer.fit_transform(x4.detach())
-embedding_4 = pd.DataFrame(embedding_4, columns=['UMAP1', 'UMAP2'])
-embedding_5 = reducer.fit_transform(x5.detach())
-embedding_5 = pd.DataFrame(embedding_5, columns=['UMAP1', 'UMAP2'])
-reconstructed_embeddeing = reducer.fit_transform(x5.detach())
-reconstructed_embeddeing = pd.DataFrame(reconstructed_embeddeing, columns=['UMAP1', 'UMAP2'])
+#Plot UMAPs of embeddings
 
-
-#Plot Encoding
-fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-sns.scatterplot(data=original_space, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[0])
-axes[0].set_title('Original')
-axes[0].set_xlabel('UMAP1')
-axes[0].set_ylabel('UMAP2')
-axes[0].grid(True)
-
-sns.scatterplot(data=embedding_1, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[1])
-axes[1].set_title('Encoder Embeddings 1')
-axes[1].set_xlabel('UMAP1')
-axes[1].set_ylabel('UMAP2')
-axes[1].grid(True)
-
-sns.scatterplot(data=embedding_2, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[2])
-axes[2].set_title('Encoder Embeddings 2')
-axes[2].set_xlabel('UMAP1')
-axes[2].set_ylabel('UMAP2')
-axes[2].grid(True)
-plt.legend(title='Annotations')
-plt.show()
-
-#Plot Latent Embeddings
-plt.figure(figsize=(10, 7))
-sns.scatterplot(data=latent_embeddeing, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100)
-plt.title('Latent Embeddings')
-plt.xlabel('UMAP1')
-plt.ylabel('UMAP2')
-plt.legend(title='Annotations')
-plt.show()
-
-#Plot Decoding
-fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-sns.scatterplot(data=embedding_4, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[0])
-axes[0].set_title('Decoder Embeddings 1')
-axes[0].set_xlabel('UMAP1')
-axes[0].set_ylabel('UMAP2')
-axes[0].grid(True)
-
-sns.scatterplot(data=embedding_5, x='UMAP1', y='UMAP2', hue=labels, palette='Set1', s=100, ax=axes[1])
-axes[1].set_title('Decoder Embeddings 2')
-axes[1].set_xlabel('UMAP1')
-axes[1].set_ylabel('UMAP2')
-axes[1].grid(True)
-
-sns.scatterplot(data=reconstructed_embeddeing, x='UMAP1', y=labels, hue='Label', palette='Set1', s=100, ax=axes[2])
-axes[2].set_title('Reconstructed Embeddings')
-axes[2].set_xlabel('UMAP1')
-axes[2].set_ylabel('UMAP2')
-axes[2].grid(True)
-plt.legend(title='Annotations')
-plt.show()
