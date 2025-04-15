@@ -83,7 +83,7 @@ print("number of edges: ", int(G.number_of_edges()))
   #Data Prep
 counts = torch.tensor(adata.raw.X.transpose(), dtype=torch.float)
 features_log = torch.log1p(counts)
-    #Min-Max Norm
+    #Min-Max Scaling
 #min_max_scaler = MinMaxScaler()
 #features_log_norm = min_max_scaler.fit_transform(features_log.detach().numpy())
     #Standard Scaling
@@ -237,11 +237,8 @@ for i in range(len(w1)):
 df = pd.DataFrame(attention_weights, columns=['Source Node', 'Target Node', 'Attention Coefficient'])
 df.to_csv('attention_coefficients.csv', index=False)
 
-#Embeddings
+# Extract Embeddings
 with torch.inference_mode():
     x1, x2, latent = model.run_encoder(data, return_embeddings = True)
     x4, x5, reconstructed = model.run_decoder(latent, data.edge_index, data.edge_weight, return_embeddings = True)
-
-
-#Plot UMAPs of embeddings
 
